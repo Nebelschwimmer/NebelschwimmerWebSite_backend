@@ -149,6 +149,56 @@ app.put('/texts/update/:textID', (req, res) => {
 }
 )
 
+// --------------ADD TEXT TO FAVOURITES-----------------
+app.patch('/texts/likes/add/:textID', (req, res) => {
+  try {
+    const textID = req.params.textID;
+    const userID = req.body.user_id;
+
+    Texts.findOneAndUpdate({_id: textID}, { $push: { likes: userID  }}).then(function () {
+      Texts.findById(textID).then(function (favText) {
+        res.status(200).send(favText);
+          }
+        )
+      }
+    )
+  }
+
+  catch {
+    res.status(500).send('An error occured')
+    }
+  }
+)
+
+// --------------REMOVE TEXT FROM FAVOURITES-----------------
+app.delete('/texts/likes/delete/:textID', (req, res) => {
+  try {
+    const textID = req.params.textID;
+    const userID = req.body.user_id;
+
+    Texts.findOneAndUpdate({_id: textID}, { $pull: {likes: userID}}).then(function () {
+      Texts.findById(textID).then(function (favText) {
+        res.status(200).send(favText);
+          }
+        )
+      }
+    )
+  }
+
+  catch {
+    res.status(500).send('An error occured')
+    }
+  }
+)
+
+
+
+
+
+
+
+
+
 
 app.use(express.json());
 
