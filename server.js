@@ -8,8 +8,6 @@ const bodyParser = require('body-parser')
 const fs = require('fs');
 const fileupload = require('express-fileupload');
 
-
-
 // Using CORS
 app.use(cors())
 // Applying header
@@ -33,14 +31,6 @@ app.use('/texts', textsRouter);
 const musicRouter = require('./music_routes');
 
 app.use('/music', musicRouter);
-
-
-
-
-
-
-
-
 
 
 app.use(express.json());

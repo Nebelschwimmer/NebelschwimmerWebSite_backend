@@ -1,7 +1,8 @@
 
 const express = require('express')
 const texts = express.Router()
-
+const url = require('url');
+const querystring = require('querystring');
 const mongoose = require("mongoose");
 mongoose.connect(
   process.env.URI
@@ -14,6 +15,7 @@ mongoose.connect(
   
 const TextsSchema = new mongoose.Schema({
   _id : mongoose.Types.ObjectId,
+  author: String,
   name: String,
   content_en: String,
   content_ru: String,
@@ -45,11 +47,35 @@ const Texts = mongoose.model('Texts', TextsSchema, 'Texts');
 
 // --------------GET ALL TEXTS-----------------
 texts.get('/', (req, res) => {
+  const searchQuery = req.query.search;
+
+
   
-  Texts.find({}).then(function (texts) {
-    res.send(texts);
-});
+  if (searchQuery !== undefined) {
+    Texts.find({$or: 
+          [
+            {author: searchQuery},
+            {name: searchQuery},
+            { content_en: { $regex: new RegExp(searchQuery, "ig")}},
+            { content_ru: { $regex: new RegExp(searchQuery, "ig")}}
+          ]
+      }).then(function (text) {
+          res.send(text);
+        });
+  }
+
+
+  else {
+    Texts.find({}).then(function (texts) {
+      res.send(texts);
+  });
+  }
 })
+
+
+
+
+
 // --------------GET SINGLE TEXT BY ID-----------------
 texts.get('/:textID', (req, res) => {
   const textID = req.params.textID;
@@ -66,17 +92,18 @@ texts.post('/add', (req, res) => {
       const myId = new mongoose.Types.ObjectId();
       let enContent, ruContent;
       if (dataFromOutside.content_en === undefined) 
-        enContent = '';
+        enContent = ''
       else enContent = dataFromOutside.content_en;
 
       if (dataFromOutside.content_ru === undefined) 
-        ruContent = '';
+        ruContent = ''
       else ruContent = dataFromOutside.content_ru;
 
 
       
       const singleText = new Texts({
         _id: myId,
+        author: dataFromOutside.user_displayName,
         name: dataFromOutside.name,
         content_en: enContent,
         content_ru: ruContent,
@@ -243,5 +270,7 @@ texts.delete('/comments/:textID', (req, res) => {
     }
   }
 )
+
+
 
 module.exports = texts
