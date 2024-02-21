@@ -8,6 +8,9 @@ const bodyParser = require('body-parser')
 const fs = require('fs');
 const fileupload = require('express-fileupload');
 
+
+
+
 // Using CORS
 app.use(cors())
 // Applying header
@@ -36,20 +39,20 @@ app.use('/music', musicRouter);
 app.use(express.json());
 
 // Open access to folder 'Public'
-app.use('/public', express.static(`${__dirname}/public`));
+// app.use('/public', express.static(`${__dirname}/public`));
 
 
-const trackList = require('./trackList.json');
+// const trackList = require('./trackList.json');
 
 
 
-  // --------Сommon vars for music API-------------
-  // Reading music json 
-  const readMusicJson = fs.readFileSync('./trackList.json', "utf8")  
-  // Parsing music json
-  const musicArrayParsed = JSON.parse(readMusicJson)
-  // ID generator for music
-  let randomTrackID = "id_" + Math.random().toString(16).slice(2)
+  // // --------Сommon vars for music API-------------
+  // // Reading music json 
+  // const readMusicJson = fs.readFileSync('./trackList.json', "utf8")  
+  // // Parsing music json
+  // const musicArrayParsed = JSON.parse(readMusicJson)
+  // // ID generator for music
+  // let randomTrackID = "id_" + Math.random().toString(16).slice(2)
 
 
 

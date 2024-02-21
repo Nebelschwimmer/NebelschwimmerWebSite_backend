@@ -8,15 +8,12 @@ mongoose.connect(
   process.env.URI
   );
 
-
-
-
-
-  
 const TextsSchema = new mongoose.Schema({
   _id : mongoose.Types.ObjectId,
   author: String,
-  name: String,
+  author_id: String,
+  name_en: String,
+  name_ru: String,
   content_en: String,
   content_ru: String,
   likes: [String],
@@ -48,33 +45,26 @@ const Texts = mongoose.model('Texts', TextsSchema, 'Texts');
 // --------------GET ALL TEXTS-----------------
 texts.get('/', (req, res) => {
   const searchQuery = req.query.search;
-
-
-  
   if (searchQuery !== undefined) {
+    
     Texts.find({$or: 
           [
-            {author: searchQuery},
-            {name: searchQuery},
-            { content_en: { $regex: new RegExp(searchQuery, "ig")}},
-            { content_ru: { $regex: new RegExp(searchQuery, "ig")}}
+            {author: { $regex: new RegExp(searchQuery, "ig")}},
+            {name_en: { $regex: new RegExp(searchQuery, "ig")}},
+            {name_ru: { $regex: new RegExp(searchQuery, "ig")}},
+            {content_en: { $regex: new RegExp(searchQuery, "ig")}},
+            {content_ru: { $regex: new RegExp(searchQuery, "ig")}}
           ]
       }).then(function (text) {
           res.send(text);
         });
   }
-
-
   else {
     Texts.find({}).then(function (texts) {
       res.send(texts);
   });
   }
 })
-
-
-
-
 
 // --------------GET SINGLE TEXT BY ID-----------------
 texts.get('/:textID', (req, res) => {
@@ -90,7 +80,15 @@ texts.post('/add', (req, res) => {
     try {
       const dataFromOutside = req.body
       const myId = new mongoose.Types.ObjectId();
-      let enContent, ruContent;
+      let enContent, ruContent, nameEn, nameRu;
+      if (dataFromOutside.name_en === '') 
+      nameEn = 'No English Name'
+      else nameEn = dataFromOutside.name_en;
+      if (dataFromOutside.name_ru === '') 
+      nameRu = 'Нет русс. назв.'
+      else nameRu = dataFromOutside.name_ru;
+      
+      
       if (dataFromOutside.content_en === undefined) 
         enContent = ''
       else enContent = dataFromOutside.content_en;
@@ -104,7 +102,9 @@ texts.post('/add', (req, res) => {
       const singleText = new Texts({
         _id: myId,
         author: dataFromOutside.user_displayName,
-        name: dataFromOutside.name,
+        author_id: dataFromOutside.author_id,
+        name_en: nameEn,
+        name_ru: nameRu,
         content_en: enContent,
         content_ru: ruContent,
         likes: [],
@@ -154,9 +154,7 @@ texts.put('/update/en/:textID', (req, res) => {
     Texts.findOneAndUpdate({_id: textID}, {content_en: dataFromOutside.content_en}).then(function () {
       Texts.findById(textID).then(function (updatedText) {
         res.status(200).send(updatedText);
-        }
-      )
-      }
+        })}
     )  
   }
   catch {
@@ -171,11 +169,8 @@ texts.put('/update/ru/:textID', (req, res) => {
     const dataFromOutside = req.body
     Texts.findOneAndUpdate({_id: textID}, {content_ru: dataFromOutside.content_ru}).then(function () {
       Texts.findById(textID).then(function (updatedText) {
-        res.status(200).send(updatedText);
-        }
-      )
-      }
-    )  
+        res.status(200).send(updatedText);})
+      })
   }
   catch {
     res.status(500).send('An error occured')
@@ -183,7 +178,39 @@ texts.put('/update/ru/:textID', (req, res) => {
 }
 )
 
+// --------------FIND TEXT AND UPDATE EN NAME-----------------
+texts.put('/update/name_en/:textID', (req, res) => {
+  try {
+    const textID = req.params.textID;
+    const dataFromOutside = req.body
+    
+    Texts.findOneAndUpdate({_id: textID}, {name_en: dataFromOutside.name_en}).then(function () {
+      Texts.findById(textID).then(function (updatedText) {
+        res.status(200).send(updatedText);})
+      })
+  }
+  catch {
+    res.status(500).send('An error occured')
+  }
+}
+)
 
+// --------------FIND TEXT AND UPDATE RU NAME-----------------
+texts.put('/update/name_ru/:textID', (req, res) => {
+  try {
+    const textID = req.params.textID;
+    const dataFromOutside = req.body
+    
+    Texts.findOneAndUpdate({_id: textID}, {name_ru: dataFromOutside.name_ru}).then(function () {
+      Texts.findById(textID).then(function (updatedText) {
+        res.status(200).send(updatedText);})
+      })
+  }
+  catch {
+    res.status(500).send('An error occured')
+  }
+}
+)
 
 // --------------ADD TEXT TO FAVOURITES-----------------
 texts.patch('/likes/add/:textID', (req, res) => {
