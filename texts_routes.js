@@ -10,7 +10,8 @@ mongoose.connect(
 
 const TextsSchema = new mongoose.Schema({
   _id : mongoose.Types.ObjectId,
-  author: String,
+  author_en: String,
+  author_ru: String,
   author_id: String,
   name_en: String,
   name_ru: String,
@@ -80,28 +81,34 @@ texts.post('/add', (req, res) => {
     try {
       const dataFromOutside = req.body
       const myId = new mongoose.Types.ObjectId();
-      let enContent, ruContent, nameEn, nameRu;
-      if (dataFromOutside.name_en === '') 
+      let enContent, ruContent, nameEn, nameRu, authorRu, authorEn;
+      if (!dataFromOutside.name_en) 
       nameEn = 'No English Name'
       else nameEn = dataFromOutside.name_en;
-      if (dataFromOutside.name_ru === '') 
+      if (!dataFromOutside.name_ru) 
       nameRu = 'Нет русс. назв.'
       else nameRu = dataFromOutside.name_ru;
       
-      
-      if (dataFromOutside.content_en === undefined) 
+      if (!dataFromOutside.content_en) 
         enContent = ''
       else enContent = dataFromOutside.content_en;
 
-      if (dataFromOutside.content_ru === undefined) 
+      if (!dataFromOutside.content_ru) 
         ruContent = ''
       else ruContent = dataFromOutside.content_ru;
 
+      if(!dataFromOutside.author_en)
+      authorEn = 'Anonymous';
+      else authorEn = dataFromOutside.author_en
 
+      if(!dataFromOutside.author_ru)
+      authorRu = 'Аноним';
+      else authorRu = dataFromOutside.author_ru
       
       const singleText = new Texts({
         _id: myId,
-        author: dataFromOutside.user_displayName,
+        author_en: authorEn,
+        author_ru: authorRu,
         author_id: dataFromOutside.author_id,
         name_en: nameEn,
         name_ru: nameRu,
