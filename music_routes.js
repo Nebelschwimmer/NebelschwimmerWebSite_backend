@@ -25,7 +25,7 @@ music.use(express.urlencoded({
         fileupload({
           createParentPath: true,
           uriDecodeFileNames: true,
-          limits: { fileSize: 10 * 1024 * 1024 },
+          limits: { fileSize: 20 * 1024 * 1024 },
         })
       )
 
@@ -36,8 +36,6 @@ const MusicSchema = new mongoose.Schema({
   track_author: String,
   track_author_id: String,
   track_name: String,
-  track_description_en: String,
-  track_description_ru: String,
   track_image: String,
   track_source: String,
   track_likes: [String]
@@ -49,29 +47,44 @@ const MusicSchema = new mongoose.Schema({
 });
 const Music = mongoose.model('Music', MusicSchema, 'Music');
 
-// --------------GET ALL TRACKS-----------------
+// --------------GET ALL TRACKS AND SEARCH-----------------
 music.get('/', (req, res) => {
-  
-  Music.find({}).then(function (music) {
-    res.status(200).send(music);
-});
+  const searchQuery = req.query.search;
+  if (searchQuery !== undefined) {
+    
+    Music.find({$or: 
+      [
+        {author: { $regex: new RegExp(searchQuery, "ig")}},
+        {track_name: { $regex: new RegExp(searchQuery, "ig")}},
+      ]
+    }).then(function (text) {
+      res.send(text);
+    });
+  }
+  else {
+    Music.find({}).then(function (music) {
+      res.status(200).send(music);
+  });
+  }
+
 })
+
 
 
 // --------------POST NEW TRACK-----------------
 music.post('/add', (req, res) => {
 
   try {
-    const dataFromOutside = req.body
+    const dataFromOutside = req.body;
     const myId = new mongoose.Types.ObjectId();
     const trackFile = req.files.file__audio;
     const imageFile = req.files.file__image;
     trackFile.mv('./public/audio/' + dataFromOutside.track_name + '.mp3');
     if (imageFile) imageFile.mv('./public/pictures/' + imageFile.name);
-  let imagePath, trackPath
-  trackPath = `http://localhost:3020/music/public/audio/${dataFromOutside.track_name + '.mp3'}`
-  if (imageFile) imagePath = `http://localhost:3020/music/public/pictures/${imageFile.name}`
-    
+    let imagePath, trackPath;
+    trackPath = `http://localhost:3020/music/public/audio/${dataFromOutside.track_name + '.mp3'}`;
+    if (imageFile) imagePath = `http://localhost:3020/music/public/pictures/${imageFile.name}`;
+      
     const Track = new Music({
       _id : myId,
       track_author: dataFromOutside.track_author,

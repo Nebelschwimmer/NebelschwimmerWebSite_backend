@@ -49,16 +49,16 @@ texts.get('/', (req, res) => {
   if (searchQuery !== undefined) {
     
     Texts.find({$or: 
-          [
-            {author: { $regex: new RegExp(searchQuery, "ig")}},
-            {name_en: { $regex: new RegExp(searchQuery, "ig")}},
-            {name_ru: { $regex: new RegExp(searchQuery, "ig")}},
-            {content_en: { $regex: new RegExp(searchQuery, "ig")}},
-            {content_ru: { $regex: new RegExp(searchQuery, "ig")}}
-          ]
-      }).then(function (text) {
-          res.send(text);
-        });
+      [
+        {author: { $regex: new RegExp(searchQuery, "ig")}},
+        {name_en: { $regex: new RegExp(searchQuery, "ig")}},
+        {name_ru: { $regex: new RegExp(searchQuery, "ig")}},
+        {content_en: { $regex: new RegExp(searchQuery, "ig")}},
+        {content_ru: { $regex: new RegExp(searchQuery, "ig")}}
+      ]
+  }).then(function (text) {
+      res.send(text);
+    });
   }
   else {
     Texts.find({}).then(function (texts) {

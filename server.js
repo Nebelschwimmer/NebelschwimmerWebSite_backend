@@ -25,15 +25,19 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }))
 
 
-// Adding texts routes
+
 const textsRouter = require('./texts_routes');
 
 app.use('/texts', textsRouter);
 
-// Adding music routes
+
 const musicRouter = require('./music_routes');
 
 app.use('/music', musicRouter);
+
+const picturesRouter = require('./pictures_routes');
+
+app.use('/pictures', picturesRouter);
 
 
 app.use(express.json());
@@ -247,37 +251,6 @@ app.use(express.json());
 // })
 
 //----------------------------------------------------------
-
-// // -----------------GET for texts--------------------------
-// const textsList = require('./texts.json');
-// const { ObjectId } = require('mongodb');
-// app.get('/texts', (req, res) => {
-//   res.status(200).json({ data: textsList });
-// });
-
-// // -----------------POST for texts--------------------------
-
-// app.post('/texts', (req, res) => {
-
-// // }
-// )
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
   // Слушаем заданный порт
