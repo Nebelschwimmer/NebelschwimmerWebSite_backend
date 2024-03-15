@@ -44,7 +44,7 @@ const MusicSchema = new mongoose.Schema({
 const Music = mongoose.model('Music', MusicSchema, 'Music');
 
 // --------------GET ALL TRACKS AND SEARCH-----------------
-music.get('/', (req, res) => {
+music.get('/', async (req, res) => {
   const searchQuery = req.query.search;
   if (searchQuery !== undefined) {
     
@@ -59,8 +59,21 @@ music.get('/', (req, res) => {
   }
   else {
     
-    Music.find({}).then(function (music) {
-      res.status(200).send(music);
+    const { page = 1, limit = 5} = req.query;
+    const tracksNumber = await Music.countDocuments({}).exec();
+    let totalPages = Math.floor(tracksNumber / limit);
+
+  
+    if (tracksNumber > totalPages * limit)
+    totalPages = Math.floor(tracksNumber / limit) + 1
+
+    await Music.find()
+    .limit(limit * 1)
+    .skip((page - 1) * limit)
+    .sort({createdAt: -1})
+    .then(function (tracks) {
+      res.send({tracks, 
+        totalPages: totalPages})
   });
   }
 
