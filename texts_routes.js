@@ -1,8 +1,9 @@
 
-const express = require('express')
-const texts = express.Router()
-const url = require('url');
-const querystring = require('querystring');
+const express = require('express');
+const texts = express.Router();
+const { getAuth } = require('firebase-admin/auth');
+
+
 const mongoose = require("mongoose");
 mongoose.connect(
   process.env.URI
@@ -12,7 +13,7 @@ const TextsSchema = new mongoose.Schema({
   _id : mongoose.Types.ObjectId,
   author_en: String,
   author_ru: String,
-  author_id: String,
+  publisher_id: String,
   name_en: String,
   name_ru: String,
   content_en: String,
@@ -24,8 +25,6 @@ const TextsSchema = new mongoose.Schema({
         type: new mongoose.Schema(
           {
           user_id: String, 
-          user_displayName: String, 
-          user_photoURL: String, 
           comment_body: String,
           },
           {
@@ -44,33 +43,47 @@ const Texts = mongoose.model('Texts', TextsSchema, 'Texts');
 
 
 // --------------GET ALL TEXTS-----------------
-texts.get('/', (req, res) => {
+texts.get('/', async (req, res) => {
   const searchQuery = req.query.search;
   if (searchQuery !== undefined) {
     
-    Texts.find({$or: 
+    await Texts.find({$or: 
       [
-        {author: { $regex: new RegExp(searchQuery, "ig")}},
+        {author_en: { $regex: new RegExp(searchQuery, "ig")}},
+        {author_ru: { $regex: new RegExp(searchQuery, "ig")}},
         {name_en: { $regex: new RegExp(searchQuery, "ig")}},
         {name_ru: { $regex: new RegExp(searchQuery, "ig")}},
         {content_en: { $regex: new RegExp(searchQuery, "ig")}},
         {content_ru: { $regex: new RegExp(searchQuery, "ig")}}
       ]
-  }).then(function (text) {
+    }).then(function (text) {
       res.send(text);
     });
   }
   else {
-    Texts.find({}).then(function (texts) {
-      res.send(texts);
+    const { page = 1, limit = 10} = req.query;
+    const textsNumber = await Texts.countDocuments({}).exec();
+    let totalPages = Math.floor(textsNumber / limit);
+
+  
+    if (textsNumber > totalPages * limit)
+    totalPages = Math.floor(textsNumber / limit) + 1
+
+    await Texts.find()
+    .limit(limit * 1)
+    .skip((page - 1) * limit)
+    .sort({createdAt: -1})
+    .then(function (texts) {
+      res.send({texts, 
+        totalPages: totalPages})
   });
   }
 })
 
 // --------------GET SINGLE TEXT BY ID-----------------
-texts.get('/:textID', (req, res) => {
+texts.get('/:textID', async (req, res) => { 
   const textID = req.params.textID;
-  Texts.findById(textID).then(function (text) {
+  await Texts.findById(textID).then(function (text) {
     res.send(text);
     
 });
@@ -83,10 +96,10 @@ texts.post('/add', (req, res) => {
       const myId = new mongoose.Types.ObjectId();
       let enContent, ruContent, nameEn, nameRu, authorRu, authorEn;
       if (!dataFromOutside.name_en) 
-      nameEn = 'No English Name'
+      nameEn =  dataFromOutside.name_ru || 'No English Name'
       else nameEn = dataFromOutside.name_en;
       if (!dataFromOutside.name_ru) 
-      nameRu = 'Нет русс. назв.'
+      nameRu = dataFromOutside.name_en || 'Нет русс. назв.'
       else nameRu = dataFromOutside.name_ru;
       
       if (!dataFromOutside.content_en) 
@@ -98,18 +111,18 @@ texts.post('/add', (req, res) => {
       else ruContent = dataFromOutside.content_ru;
 
       if(!dataFromOutside.author_en)
-      authorEn = 'Anonymous';
+      authorEn = dataFromOutside.author_ru || 'Anonymous';
       else authorEn = dataFromOutside.author_en
 
       if(!dataFromOutside.author_ru)
-      authorRu = 'Аноним';
+      authorRu = dataFromOutside.author_en || 'Аноним';
       else authorRu = dataFromOutside.author_ru
       
       const singleText = new Texts({
         _id: myId,
         author_en: authorEn,
         author_ru: authorRu,
-        author_id: dataFromOutside.author_id,
+        publisher_id: dataFromOutside.author_id,
         name_en: nameEn,
         name_ru: nameRu,
         content_en: enContent,
@@ -262,8 +275,6 @@ texts.post('/comments/:textID', (req, res) => {
     Texts.findOneAndUpdate({_id: textID}, { $push: 
       { comments: {
           user_id: req.body.user_id, 
-          user_displayName: req.body.user_displayName , 
-          user_photoURL: req.body.user_photoURL,
           comment_body: commentBody
         }
       }
@@ -304,6 +315,28 @@ texts.delete('/comments/:textID', (req, res) => {
     }
   }
 )
+// --------------FIND AUTHOR'S INFO OF THE COMMENTS-----------------
+texts.patch('/comments/getAuthorName/', (req, res) => {
+  
+  try {
+  const userID = req.body.user_id;
+  
+  getAuth().getUser(userID).then(userRecord => 
+    res.status(200).send(JSON.stringify({author_name: userRecord.displayName, author_avatar: userRecord.photoURL, message: "Success"})))
+    .catch(errorInfo => {
+    if (errorInfo.code === 'auth/user-not-found')
+    res.status(200).send(JSON.stringify({message: 'User Not Found'})) 
+    }
+  )
+  
+  }
+  catch (err) {
+    console.log(err)
+    res.status(500).send('An error occured')
+  }
+}
+)
+
 
 
 

@@ -1,9 +1,10 @@
 const express = require('express')
 const music = express.Router()
 const bodyParser = require('body-parser')
-// music.use(express.json());
 const fileupload = require('express-fileupload');
-const path = require('path');
+const { getAuth } = require('firebase-admin/auth');
+
+
 
 const mongoose = require("mongoose");
 mongoose.connect(
@@ -11,15 +12,12 @@ mongoose.connect(
   );
 
 
+
 music.use(bodyParser.json());
 music.use(bodyParser.urlencoded({ extended: true }))
 
 music.use('/public', express.static(`${__dirname}/public`));
 
-
-music.use(express.urlencoded({
-  extended: false
-  }));
 
   music.use(
         fileupload({
@@ -29,8 +27,6 @@ music.use(express.urlencoded({
         })
       )
 
-
-  
 const MusicSchema = new mongoose.Schema({
   _id : mongoose.Types.ObjectId,
   track_author: String,
@@ -62,6 +58,7 @@ music.get('/', (req, res) => {
     });
   }
   else {
+    
     Music.find({}).then(function (music) {
       res.status(200).send(music);
   });
@@ -84,7 +81,17 @@ music.post('/add', (req, res) => {
     let imagePath, trackPath;
     trackPath = `http://localhost:3020/music/public/audio/${dataFromOutside.track_name + '.mp3'}`;
     if (imageFile) imagePath = `http://localhost:3020/music/public/pictures/${imageFile.name}`;
-      
+
+    getAuth()
+    .getUser(dataFromOutside.track_author_id)
+    .then((userRecord) => {
+      // See the UserRecord reference doc for the contents of userRecord.
+      console.log(`Successfully fetched user data: ${userRecord.toJSON()}`);
+    })
+    .catch((error) => {
+      console.log('Error fetching user data:', error);
+    });
+
     const Track = new Music({
       _id : myId,
       track_author: dataFromOutside.track_author,
@@ -176,6 +183,25 @@ music.put('/update/', (req, res) => {
       Music.find({}).then(function (updatedTracks) {
         res.status(200).send(updatedTracks);})
       })
+  }
+  catch (err) {
+    console.log(err)
+    res.status(500).send('An error occured')
+  }
+}
+)
+
+music.patch('/getAuthorName/', (req, res) => {
+  
+  try {
+  const userID = req.body.track_author_id;
+  const user = getAuth().getUser(userID).then(userRecord => 
+  res.status(200).send(JSON.stringify({authorName: userRecord.displayName, message: "Success"}))).catch(errorInfo => {
+    if (errorInfo.code === 'auth/user-not-found')
+    res.status(200).send(JSON.stringify({message: 'User Not Found'})) 
+
+  })
+
   }
   catch (err) {
     console.log(err)
