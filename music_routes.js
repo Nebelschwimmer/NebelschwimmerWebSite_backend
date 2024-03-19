@@ -20,12 +20,12 @@ music.use('/public', express.static(`${__dirname}/public`));
 
 
   music.use(
-        fileupload({
-          createParentPath: true,
-          uriDecodeFileNames: true,
-          limits: { fileSize: 20 * 1024 * 1024 },
-        })
-      )
+  fileupload({
+    createParentPath: true,
+    uriDecodeFileNames: true,
+    limits: { fileSize: 20 * 1024 * 1024 },
+  })
+)
 
 const MusicSchema = new mongoose.Schema({
   _id : mongoose.Types.ObjectId,
