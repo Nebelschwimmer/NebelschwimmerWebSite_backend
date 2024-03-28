@@ -40,7 +40,7 @@ const admin = require("firebase-admin");
 
 admin.initializeApp({
   
-  credential: admin.credential.cert(serviceAccount),
+  credential: admin.credential.applicationDefault(),
   
   databaseURL: "https://mypersonalwebsite-be592-default-rtdb.europe-west1.firebasedatabase.app"
   
