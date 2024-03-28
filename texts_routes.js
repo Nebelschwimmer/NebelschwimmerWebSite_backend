@@ -61,11 +61,11 @@ texts.get('/', async (req, res) => {
     });
   }
   else {
-    const { page = 1, limit = 10} = req.query;
+    const page = req.query.page;
+    const limit = 5;
     const textsNumber = await Texts.countDocuments({}).exec();
     let totalPages = Math.floor(textsNumber / limit);
 
-  
     if (textsNumber > totalPages * limit)
     totalPages = Math.floor(textsNumber / limit) + 1
 
@@ -323,6 +323,29 @@ texts.patch('/comments/getAuthorName/', (req, res) => {
   
   getAuth().getUser(userID).then(userRecord => 
     res.status(200).send(JSON.stringify({author_name: userRecord.displayName, author_avatar: userRecord.photoURL, message: "Success"})))
+    .catch(errorInfo => {
+    if (errorInfo.code === 'auth/user-not-found')
+    res.status(200).send(JSON.stringify({message: 'User Not Found'})) 
+    }
+  )
+  
+  }
+  catch (err) {
+    console.log(err)
+    res.status(500).send('An error occured')
+  }
+}
+)
+
+
+// --------------FIND AUTHOR'S INFO FOR TEXTS LIST-----------------
+texts.patch('/getPublisherInfo/', (req, res) => {
+  
+  try {
+  const userID = req.body.publisher_id;
+  
+  getAuth().getUser(userID).then(userRecord => 
+    res.status(200).send(JSON.stringify({publisher_name: userRecord.displayName, publisher_avatar: userRecord.photoURL, message: "Success"})))
     .catch(errorInfo => {
     if (errorInfo.code === 'auth/user-not-found')
     res.status(200).send(JSON.stringify({message: 'User Not Found'})) 

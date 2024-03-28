@@ -95,15 +95,6 @@ music.post('/add', (req, res) => {
     trackPath = `http://localhost:3020/music/public/audio/${dataFromOutside.track_name + '.mp3'}`;
     if (imageFile) imagePath = `http://localhost:3020/music/public/pictures/${imageFile.name}`;
 
-    getAuth()
-    .getUser(dataFromOutside.track_author_id)
-    .then((userRecord) => {
-      // See the UserRecord reference doc for the contents of userRecord.
-      console.log(`Successfully fetched user data: ${userRecord.toJSON()}`);
-    })
-    .catch((error) => {
-      console.log('Error fetching user data:', error);
-    });
 
     const Track = new Music({
       _id : myId,
