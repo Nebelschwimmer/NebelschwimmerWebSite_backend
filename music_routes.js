@@ -93,8 +93,8 @@ music.post('/add', async (req, res) => {
     trackFile.mv('./public/audio/' + dataFromOutside.track_name + '_' + myId + '.mp3');
     if (imageFile) imageFile.mv('./public/pictures/' + imageFile.name);
     let imagePath, trackPath;
-    trackPath = `http://localhost:3020/music/public/audio/${dataFromOutside.track_name + '_' + myId + '.mp3'}`;
-    if (imageFile) imagePath = `http://localhost:3020/music/public/pictures/${imageFile.name}`;
+    trackPath = `http://185.180.230.199:3020/music/public/audio/${dataFromOutside.track_name + '_' + myId + '.mp3'}`;
+    if (imageFile) imagePath = `http://185.180.230.199:3020/music/public/pictures/${imageFile.name}`;
 
     const Track =  new Music({
       _id : myId,
@@ -123,7 +123,7 @@ music.delete('/delete/', async (req, res) => {
   try {
     const trackID = req.body._id;
     const trackSource = req.body.track_source;
-    const filePath = trackSource.replace('http://localhost:3020/music', '.')
+    const filePath = trackSource.replace('http://185.180.230.199:3020/music', '.')
     console.log(filePath)
     fs.unlink(filePath, () => console.log('File successfully deleted'));
     await Music.findByIdAndDelete(trackID).then(function () {
@@ -180,7 +180,7 @@ music.put('/update/', async (req, res) => {
     let trackImagePath
     if (imageFile !== undefined) {
       imageFile.mv('./public/pictures/' + imageFile.name);
-      trackImagePath = `http://localhost:3020/music/public/pictures/${imageFile.name}`
+      trackImagePath = `http://185.180.230.199:3020/music/public/pictures/${imageFile.name}`
       }
       else trackImagePath = dataFromOutside.track_image
     
