@@ -64,7 +64,7 @@ texts.get('/', async (req, res) => {
     const page = req.query.page;
     
     let sort = req.query.sort;
-    console.log(sort)
+    
     const limit = 5;
     const textsNumber = await Texts.countDocuments({}).exec();
     let totalPages = Math.floor(textsNumber / limit);
@@ -75,7 +75,7 @@ texts.get('/', async (req, res) => {
     await Texts.find()
     .limit(limit * 1)
     .skip((page - 1) * limit)
-    .sort({createdAt: sort})
+    .sort({createdAt: -1})
     .then(function (texts) {
       res.send({texts, 
         totalPages: totalPages})

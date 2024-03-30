@@ -71,7 +71,7 @@ music.get('/', async (req, res) => {
     await Music.find()
     .limit(limit * 1)
     .skip((page - 1) * limit)
-    .sort({createdAt: sort})
+    .sort({createdAt: -1})
     .then(function (tracks) {
       res.send({tracks, 
         totalPages: totalPages})
