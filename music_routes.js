@@ -3,8 +3,7 @@ const music = express.Router()
 const bodyParser = require('body-parser')
 const fileupload = require('express-fileupload');
 const { getAuth } = require('firebase-admin/auth');
-
-
+const fs = require('fs');
 
 const mongoose = require("mongoose");
 mongoose.connect(
@@ -60,17 +59,19 @@ music.get('/', async (req, res) => {
   else {
     
     const { page = 1, limit = 5} = req.query;
+    let sort = req.query.sort;
     const tracksNumber = await Music.countDocuments({}).exec();
     let totalPages = Math.floor(tracksNumber / limit);
 
   
-    if (tracksNumber > totalPages * limit)
-    totalPages = Math.floor(tracksNumber / limit) + 1
-
+    if (tracksNumber > totalPages * limit) {
+      totalPages = Math.floor(tracksNumber / limit) + 1
+    }
+    
     await Music.find()
     .limit(limit * 1)
     .skip((page - 1) * limit)
-    .sort({createdAt: -1})
+    .sort({createdAt: sort})
     .then(function (tracks) {
       res.send({tracks, 
         totalPages: totalPages})
@@ -82,21 +83,20 @@ music.get('/', async (req, res) => {
 
 
 // --------------POST NEW TRACK-----------------
-music.post('/add', (req, res) => {
+music.post('/add', async (req, res) => {
 
   try {
     const dataFromOutside = req.body;
     const myId = new mongoose.Types.ObjectId();
     const trackFile = req.files.file__audio;
     const imageFile = req.files.file__image;
-    trackFile.mv('./public/audio/' + dataFromOutside.track_name + '.mp3');
+    trackFile.mv('./public/audio/' + dataFromOutside.track_name + '_' + myId + '.mp3');
     if (imageFile) imageFile.mv('./public/pictures/' + imageFile.name);
     let imagePath, trackPath;
-    trackPath = `http://localhost:3020/music/public/audio/${dataFromOutside.track_name + '.mp3'}`;
+    trackPath = `http://localhost:3020/music/public/audio/${dataFromOutside.track_name + '_' + myId + '.mp3'}`;
     if (imageFile) imagePath = `http://localhost:3020/music/public/pictures/${imageFile.name}`;
 
-
-    const Track = new Music({
+    const Track =  new Music({
       _id : myId,
       track_author: dataFromOutside.track_author,
       track_author_id: dataFromOutside.track_author_id,
@@ -105,7 +105,7 @@ music.post('/add', (req, res) => {
       track_source: trackPath,
       track_likes: []
     })
-    Track.save()
+    await Track.save()
       .then(()=> {
         Music.find({})
         .then(function(track) {
@@ -119,29 +119,30 @@ music.post('/add', (req, res) => {
   }
 })
 // --------------DELETE TRACK FROM THE LIST BY ID-----------------
-music.delete('/delete/', (req, res) => {
+music.delete('/delete/', async (req, res) => {
   try {
     const trackID = req.body._id;
-    
-    Music.findByIdAndDelete(trackID).then(function () {
+    const trackSource = req.body.track_source;
+    const filePath = trackSource.replace('http://localhost:3020/music', '.')
+    console.log(filePath)
+    fs.unlink(filePath, () => console.log('File successfully deleted'));
+    await Music.findByIdAndDelete(trackID).then(function () {
       Music.find({}).then(function (alltracks) {
         res.status(200).send(alltracks);
         }
-      )}
-    )
+      )})
   }
   catch {
     res.status(500).send('An error occured')
-  }
-}
+  }}
 )
 
 // --------------ADD TRACK TO FAVOURITES-----------------
-music.patch('/likes/add/', (req, res) => {
+music.patch('/likes/add/', async (req, res) => {
   try {
     const trackID = req.body._id;
     const userID = req.body.user_id;
-    Music.findOneAndUpdate({_id: trackID}, { $push: { track_likes: userID  }}).then(function () {
+    await Music.findOneAndUpdate({_id: trackID}, { $push: { track_likes: userID  }}).then(function () {
       Music.find({}).then(function (favTrack) {
         res.send(favTrack);
       })
@@ -153,11 +154,11 @@ music.patch('/likes/add/', (req, res) => {
   }
 )
 // --------------REMOVE TRACK FROM FAVOURITES-----------------
-music.delete('/likes/delete/', (req, res) => {
+music.delete('/likes/delete/', async (req, res) => {
   try {
     const trackID = req.body._id;
     const userID = req.body.user_id;
-    Music.findOneAndUpdate({_id: trackID}, { $pull: { track_likes: userID  }}).then(function () {
+    await Music.findOneAndUpdate({_id: trackID}, { $pull: { track_likes: userID  }}).then(function () {
       Music.find({}).then(function (favTrack) {
         res.send(favTrack);
       })
@@ -171,7 +172,7 @@ music.delete('/likes/delete/', (req, res) => {
 )
 
 // --------------UPDATE TRACK INFO-----------------
-music.put('/update/', (req, res) => {
+music.put('/update/', async (req, res) => {
   try {
     const trackID = req.body.track_id
     const imageFile = req.files?.file__image;
@@ -183,7 +184,7 @@ music.put('/update/', (req, res) => {
       }
       else trackImagePath = dataFromOutside.track_image
     
-    Music.findOneAndUpdate({_id: trackID}, {track_name: dataFromOutside.track_name , track_image: trackImagePath}).then(function () {
+    await Music.findOneAndUpdate({_id: trackID}, {track_name: dataFromOutside.track_name , track_image: trackImagePath}).then(function () {
       Music.find({}).then(function (updatedTracks) {
         res.status(200).send(updatedTracks);})
       })
@@ -194,12 +195,12 @@ music.put('/update/', (req, res) => {
   }
 }
 )
-
-music.patch('/getAuthorName/', (req, res) => {
+// -------------Get PUBLISHER'S NAME BY ID--------------------
+music.patch('/getAuthorName/', async (req, res) => {
   
   try {
   const userID = req.body.track_author_id;
-  const user = getAuth().getUser(userID).then(userRecord => 
+  const user = await getAuth().getUser(userID).then(userRecord => 
   res.status(200).send(JSON.stringify({authorName: userRecord.displayName, message: "Success"}))).catch(errorInfo => {
     if (errorInfo.code === 'auth/user-not-found')
     res.status(200).send(JSON.stringify({message: 'User Not Found'})) 
@@ -210,9 +211,10 @@ music.patch('/getAuthorName/', (req, res) => {
   catch (err) {
     console.log(err)
     res.status(500).send('An error occured')
-  }
-}
+  }}
 )
+
+
 
 
 module.exports = music

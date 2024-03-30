@@ -17,10 +17,6 @@ mongoose.connect(
   pictures.use('/public', express.static(`${__dirname}/public`));
 
 
-// music.use(express.urlencoded({
-//   extended: false
-//   }));
-
 pictures.use(
         fileupload({
           createParentPath: true,
@@ -77,13 +73,6 @@ pictures.post('/add', (req, res) => {
     const myId = new mongoose.Types.ObjectId();
     const trackFile = req.files.file__audio;
     const imageFile = req.files.file__image;
-    
-    // trackFile.mv('./public/audio/' + dataFromOutside.track_name + '.mp3');
-    // if (imageFile) imageFile.mv('./public/pictures/' + imageFile.name);
-    // let imagePath, trackPath;
-    // trackPath = `http://localhost:3020/music/public/audio/${dataFromOutside.track_name + '.mp3'}`;
-    // if (imageFile) imagePath = `http://localhost:3020/music/public/pictures/${imageFile.name}`;
-      
     const picture = new Pictures({
       _id : myId,
       author: dataFromOutside.author,

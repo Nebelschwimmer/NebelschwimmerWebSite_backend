@@ -47,7 +47,7 @@ texts.get('/', async (req, res) => {
   const searchQuery = req.query.search;
   if (searchQuery !== undefined) {
     
-    await Texts.find({$or: 
+    await Texts.find({ $or: 
       [
         {author_en: { $regex: new RegExp(searchQuery, "ig")}},
         {author_ru: { $regex: new RegExp(searchQuery, "ig")}},
@@ -62,6 +62,9 @@ texts.get('/', async (req, res) => {
   }
   else {
     const page = req.query.page;
+    
+    let sort = req.query.sort;
+    console.log(sort)
     const limit = 5;
     const textsNumber = await Texts.countDocuments({}).exec();
     let totalPages = Math.floor(textsNumber / limit);
@@ -72,7 +75,7 @@ texts.get('/', async (req, res) => {
     await Texts.find()
     .limit(limit * 1)
     .skip((page - 1) * limit)
-    .sort({createdAt: -1})
+    .sort({createdAt: sort})
     .then(function (texts) {
       res.send({texts, 
         totalPages: totalPages})
@@ -137,8 +140,7 @@ texts.post('/add', (req, res) => {
       Texts.findById(myId)
       .then(function(textById) {
         res.send(textById)
-      }
-    )
+      })
   }
 
     catch {
