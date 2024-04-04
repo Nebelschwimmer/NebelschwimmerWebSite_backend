@@ -4,6 +4,8 @@ const cors = require('cors');
 const app = express();
 const PORT = process.env.PORT || 3020;
 const bodyParser = require('body-parser')
+const fs = require('fs');
+const https = require('https');
 
 
 // Using CORS
@@ -20,6 +22,12 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }))
 
 app.use(express.json());
+
+
+const options = {
+  key: fs.readFileSync('./server.key'),
+  cert: fs.readFileSync('./server.cert')
+};
 
 
 // Роуты
@@ -49,7 +57,7 @@ admin.initializeApp({
 module.exports = admin
 
 
-  // Слушаем заданный порт
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`Server listening on ${PORT}`);
+
+https.createServer(options, app).listen(3020, () => {
+  console.log('Backend server running on port 3020');
 });
