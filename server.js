@@ -24,10 +24,6 @@ app.use(bodyParser.urlencoded({ extended: false }))
 app.use(express.json());
 
 
-const options = {
-  key: fs.readFileSync('./server.key'),
-  cert: fs.readFileSync('./server.cert')
-};
 
 
 // Роуты
@@ -56,8 +52,12 @@ admin.initializeApp({
 
 module.exports = admin
 
+const options = {
+  key: fs.readFileSync('./server.key'),
+  cert: fs.readFileSync('./server.cert')
+};
 
 
-https.createServer(options, app).listen(3020, () => {
-  console.log('Backend server running on port 3020');
+https.createServer(options, app).listen(PORT, () => {
+  console.log(`Backend server running on port ${PORT}`);
 });
