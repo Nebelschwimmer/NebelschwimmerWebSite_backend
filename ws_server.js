@@ -1,20 +1,15 @@
-const http = require('http');
+const https = require('https');
 const sockjs = require('sockjs');
 const { getAuth } = require('firebase-admin/auth');
-
+const fs = require('fs');
 // Initialize Firebase Admin SDK
-var admin = require("firebase-admin");
+const admin = require("firebase-admin");
 
-
-var serviceAccount = require("./admin_config.json");
-
+const serviceAccount = require("./admin_config.json");
 
 admin.initializeApp({
-
   credential: admin.credential.cert(serviceAccount),
-
   databaseURL: "https://mypersonalwebsite-be592-default-rtdb.europe-west1.firebasedatabase.app"
-
 });
 
 
@@ -24,8 +19,6 @@ echoServer.on('connection', function(connection) {
     try {
       const credentials = JSON.parse(data);
       const userUID = credentials.uid;
-      // console.log('Received data:', data, credentials, userUID);
-  
       if (!userUID) {
         throw new Error
       }
@@ -63,9 +56,19 @@ echoServer.on('connection', function(connection) {
   });
 });
 
-const httpServer = http.createServer();
-echoServer.installHandlers(httpServer);
+const options = {
+  key: fs.readFileSync('./server.key'),
+  cert: fs.readFileSync('./server.cert')
+};
+const httpsServer = https.createServer(options, (req, res) => {
+  res.writeHead(200, { 'Content-Type': 'text/plain' });
+  res.end('Secure SockJS server is running!\n');
+});
 
-httpServer.listen(4050, '0.0.0.0', () => {
-  console.log('SockJS server is running on port 4050');
+echoServer.installHandlers(httpsServer);
+
+
+
+httpsServer.listen(4050, '0.0.0.0', () => {
+  console.log('Secure SockJS server is running on port 4050');
 });
