@@ -52,7 +52,7 @@ echoServer.on('connection', function(connection) {
   });
 
   connection.on('close', function() {
-    connection.write(JSON.stringify({ isOnline: { checkOnlineStatus: 'User Offline'}}));
+    connection.write(JSON.stringify({ isOnline: { checkOnlineStatus: 'offline'}}));
   });
 });
 
